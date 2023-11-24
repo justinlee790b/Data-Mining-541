@@ -67,3 +67,36 @@ plt.show()
 columns = ['blueWardsPlaced', 'blueWardsDestroyed', 'blueDeaths']
 pd.plotting.scatter_matrix(df[columns], alpha=.2, figsize=(7, 7), diagonal='kde')
 plt.show()
+
+# Using the information gained from this scatter matrix, we can now count the occurence 
+# of outliers.
+
+print(f"More than 120 wards placed: {len(df[df['blueWardsPlaced'] >= 120])} games")
+print(f"More than 17 Wards destroyed: {len(df[df['blueWardsDestroyed'] >= 17])} games")
+print(f"More than 16 deaths: {len(df[df['blueDeaths'] >= 16])} games")
+
+# This data gives us really important information. In order for 120 wards to be placed in 
+# the first 10 minutes of the game, each plaer would have to place 2 wards a minute, which is impossible
+# due to the cooldown to place a ward being 90 seconds. So we should exclude this abnormality. The same reason
+# will be used for Wards Destroyed due to the Oracle (Item used to discover and destroy wards) cooldown being 
+# 120 seconds. Games having above 16 deaths in 10 minutes should almost never happen at this high of a skill level.
+# If this amount of deaths occured then it's pretty safe to assume a player was intentionally throwing the game. Therefore
+# the player was not trying, so the data is not reliable.
+
+# Define conditions to filter outliers
+condition_wards_placed = df['blueWardsPlaced'] < 120
+condition_wards_destroyed = df['blueWardsDestroyed'] < 17
+
+# Apply conditions to the DataFrame
+df_filtered = df[condition_wards_placed & condition_wards_destroyed]
+
+# Calculate the number of removed outliers
+removed_outliers = df.shape[0] - df_filtered.shape[0]
+print(f'Removed {removed_outliers} outliers')
+
+if len(df_filtered) > 0:
+    print(df_filtered.head(5))
+else:
+    print("No rows satisfy both conditions.")
+
+
