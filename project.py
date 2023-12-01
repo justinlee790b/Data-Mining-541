@@ -100,3 +100,49 @@ else:
     print("No rows satisfy both conditions.")
 
 
+# We now want to examine the variables that will have significant impact on the end result 
+# of the game. We seperate them into two categories : Numerical and Categorical. Numerical would
+# would include categories such as blueGoldDiff, blueExperienceDiff, blueKills and blueTotalMInionsKilled.
+# While categorial would include variables for Elite monsters killed which are blueDragons and blueHerals.
+# But for the Categorial values there are only two values possible, 0 or 1. This is due to the fact the first 
+# spawn for the dragon and the herald take over 5 minutes and the next spawn will take an equal amount of time, 
+# disallowing for the slaying of more than one dragon or herald.
+colors = {
+    
+    'red' : '#ff9999' ,
+    'blue' : '#66b3ff'
+    
+    
+}
+custom_palette = sns.color_palette(list(colors.values()))
+
+fig, _ax = plt.subplots(nrows=2, ncols=2, figsize=(9,7))
+plt.subplots_adjust(wspace=0.5)
+
+sns.boxplot(data=df_filtered, x='blueWins' , y='blueTotalMinionsKilled' , hue ='blueWins' , palette=custom_palette, ax=_ax[0][0] , legend=False)
+sns.boxplot(data=df_filtered, x='blueWins' , y='blueGoldDiff' , hue='blueWins' , palette=custom_palette, ax=_ax[0][1] , legend=False)
+sns.boxplot(data=df_filtered, x='blueWins' , y='blueExperienceDiff' , hue='blueWins' , palette=custom_palette, ax=_ax[1][0] , legend=False)
+sns.boxplot(data=df_filtered, x='blueWins' , y='blueKills' , hue='blueWins' , palette=custom_palette, ax=_ax[1][1] , legend=False)
+
+plt.show()
+
+# These graphs show us that the team with a lead in Gold, Experience and Kills are more likely to win. But we also 
+# want to show that Epic Monster kills also will contribute to wins
+
+fig, _ax = plt.subplots(nrows=1, ncols=2, figsize=(7, 5))
+plt.subplots_adjust(wspace=0.5)
+sns.countplot(data=df_filtered, x='blueDragons' , hue='blueWins' , palette=custom_palette , ax=_ax[0])
+sns.countplot(data=df_filtered, x='blueHeralds' , hue='blueWins' , palette=custom_palette , ax=_ax[1])
+
+plt.show()
+
+# These bar graphs show that blue team tends to win more games if they get the first dragon or herald.
+
+# We now have the features that we are confident are crucial to the output of the game. In order to be more accurate
+# we can derive an extra feature from blueKills. We can use KDA(Kills + Assists)/Deaths. This metric is very useful
+# determining any players effectivess in any PvP (Player vs Player) game. 
+
+mask = df_filtered['blueDeaths'] == 0
+df_filtered = df_filtered.copy() 
+df_filtered.loc[mask, 'kda'] = (df_filtered['blueKills'] + df_filtered['blueAssists']) / 0.5
+df_filtered.loc[~mask, 'kda'] = (df_filtered['blueKills'] + df_filtered['blueAssists']) / df_filtered['blueDeaths']
