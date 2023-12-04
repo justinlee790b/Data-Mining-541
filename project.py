@@ -1,6 +1,12 @@
 import numpy as np 
 import pandas as pd
 from pandas.plotting import scatter_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import precision_score, recall_score
+from sklearn.model_selection import cross_val_predict, cross_val_score
+from sklearn.metrics import accuracy_score, f1_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 pd.options.display.max_rows = None
@@ -127,7 +133,7 @@ sns.boxplot(data=df_filtered, x='blueWins' , y='blueKills' , hue='blueWins' , pa
 plt.show()
 
 # These graphs show us that the team with a lead in Gold, Experience and Kills are more likely to win. But we also 
-# want to show that Epic Monster kills also will contribute to wins
+# want to show that killing Epic Monsters also will contribute to wins.
 
 fig, _ax = plt.subplots(nrows=1, ncols=2, figsize=(7, 5))
 plt.subplots_adjust(wspace=0.5)
@@ -146,3 +152,76 @@ mask = df_filtered['blueDeaths'] == 0
 df_filtered = df_filtered.copy() 
 df_filtered.loc[mask, 'kda'] = (df_filtered['blueKills'] + df_filtered['blueAssists']) / 0.5
 df_filtered.loc[~mask, 'kda'] = (df_filtered['blueKills'] + df_filtered['blueAssists']) / df_filtered['blueDeaths']
+
+
+df_model = df_filtered.copy()
+x_features = df_model.loc[:, df_model.columns != 'blueWins']
+y_target = df_model.blueWins 
+x_train, x_test, y_train, y_test = train_test_split(x_features, y_target, test_size=0.3, random_state=0, stratify=y_target)
+
+for column in x_train.columns:
+    unique_values = x_train[column].nunique()
+    print(f"Column '{column}' has {unique_values} unique value(s).\n")
+
+# Now we want to seperate all our unique values into the categorical and numerical variables.
+
+categorical_vars = [vars for vars in x_train if x_train[vars].nunique() < 4]
+numerical_vars = [vars for vars in x_train if vars not in categorical_vars]
+
+print(f"{pd.DataFrame(data=categorical_vars, columns=['Categorical variable'])}\n")
+print(f"{pd.DataFrame(data=numerical_vars, columns =['Numerical variables'])}\n")
+
+
+# Now we want to standardize our numerical variables.
+
+scaler = StandardScaler()
+scaler.fit(x_train[numerical_vars])
+x_train[numerical_vars] = scaler.transform(x_train[numerical_vars])
+x_test[numerical_vars] = scaler.transform(x_test[numerical_vars])
+
+# Gaussian Naive Baiyes
+NB = GaussianNB()
+NB_scores = cross_val_score(estimator=NB, X=x_train, y=y_train, cv=3)
+NB_mean = NB_scores.mean()
+
+Classifier_name = {
+    NB: 'Gaussian Naive Baiyes'
+}
+
+# Store the results in a data frame
+mean_dict = {
+    'Classifier' : list(Classifier_name.values()),
+    'CV Score' : [NB_mean]}
+
+result = pd.DataFrame(data=mean_dict)
+result = result.sort_values(by='CV Score', ascending=False)
+print(result.to_string(index=False))
+
+# Function to evaluate classifier on accuracy, precision, recall and f1 score.
+def evaluate_classifier(estimator, x_train, y_train):
+    
+    y_predict = cross_val_predict(estimator, x_train, y_train, cv=3)
+    accuracy = accuracy_score(y_train, y_predict)
+    precision = precision_score(y_train, y_predict)
+    recall = recall_score(y_train, y_predict)
+    f1 = f1_score(y_train, y_predict)
+    
+    return pd.Series([classifier, accuracy, precision, recall, f1], 
+                     index = ['Classifier', 'Accuracy score', 'Precision score', 
+                              'Recall score', 'F1 score'])
+
+
+# The four classifiers with highest CV score
+candidate_classifier = [NB]
+evaluations = []
+
+for classifier in candidate_classifier:
+    classifier_evaluation = evaluate_classifier(classifier, x_train, y_train)
+    evaluations.append(classifier_evaluation)
+    
+evaluations_df = pd.DataFrame(evaluations, 
+                              index=[Classifier_name[c] for c in candidate_classifier],
+                              columns=['Accuracy score', 'Precision score', 
+                                       'Recall score', 'F1 score'])
+evaluations_df = evaluations_df.sort_values(by="Accuracy score", ascending=False)
+print(evaluations_df)
