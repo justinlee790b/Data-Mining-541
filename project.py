@@ -82,7 +82,7 @@ print(f"More than 17 Wards destroyed: {len(df[df['blueWardsDestroyed'] >= 17])} 
 print(f"More than 16 deaths: {len(df[df['blueDeaths'] >= 16])} games")
 
 # This data gives us really important information. In order for 120 wards to be placed in 
-# the first 10 minutes of the game, each plaer would have to place 2 wards a minute, which is impossible
+# the first 10 minutes of the game, each player would have to place 2 wards a minute, which is impossible
 # due to the cooldown to place a ward being 90 seconds. So we should exclude this abnormality. The same reason
 # will be used for Wards Destroyed due to the Oracle (Item used to discover and destroy wards) cooldown being 
 # 120 seconds. Games having above 16 deaths in 10 minutes should almost never happen at this high of a skill level.
@@ -109,7 +109,7 @@ else:
 # We now want to examine the variables that will have significant impact on the end result 
 # of the game. We seperate them into two categories : Numerical and Categorical. Numerical would
 # would include categories such as blueGoldDiff, blueExperienceDiff, blueKills and blueTotalMInionsKilled.
-# While categorial would include variables for Elite monsters killed which are blueDragons and blueHerals.
+# While categorial would include variables for Elite monsters killed which are blueDragons and blueHeralds.
 # But for the Categorial values there are only two values possible, 0 or 1. This is due to the fact the first 
 # spawn for the dragon and the herald take over 5 minutes and the next spawn will take an equal amount of time, 
 # disallowing for the slaying of more than one dragon or herald.
